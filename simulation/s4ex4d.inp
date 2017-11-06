@@ -1,0 +1,62 @@
+$ TSUPREM-4 - Electrical Extraction
+
+SOURCE  TS4.config
+
+$ Read structure from Example 4 
+INITIAL    IN.FILE=S4EX4CS
+
+$ Part A: Threshold voltage
+$ Extract the gate bias vs. the sheet conductance in channel region
+$ -- VBS=0V 
+ELECTRIC   X=0.0  THRESHOLD  NMOS  V="0 2 0.1"  OUT.FILE=S4EX4DS1
+
+$ -- VBS=-2.5V 
+ELECTRIC   X=0.0  THRESHOLD  NMOS  V="0 3 0.05"  VB=-2.5 +
+           OUT.FILE=S4EX4DS2
+
+$ Plot the Vgs vs Ids
+$ -- Define the scale to convert the sheet conductance to the current
+ASSIGN     NAME=Lch   N.VAL=1.2
+ASSIGN     NAME=Wch   N.VAL=25.0
+ASSIGN     NAME=Vds   N.VAL=0.1
+ASSIGN     NAME=Scale N.VAL=(@Vds*@Wch/@Lch)
+$ -- Plot
+SELECT     TITLE="Vgs vs. Ids"
+VIEWPORT   X.MAX=0.5
+PLOT.1D    IN.FILE=S4EX4DS1  Y.SCALE=@Scale +
+           Y.LABEL="I(Drain) (Amps)"  X.LABEL="V(Gate) (Volts)" +
+           TOP=1E-4  BOT=0  RIGHT=3.5  COLOR=2
+PLOT.1D    IN.FILE=S4EX4DS2  Y.SCALE=@Scale  ^CL  ^AX  COLOR=3  LINE=2
+LABEL      LABEL="Vbs=0"  X=1.9 Y=8E-5  RIGHT
+LABEL      LABEL="Vbs=-2.5"  X=2.3 Y=0.2E-5  LEFT
+
+$ Part B: C-V plot for MOS capacitance
+$ Extract the capacitance
+ 
+$ -- High Frequency 
+ELECTRIC   X=0.0  MOSCAP  NMOS  V="-5 5 0.2"  OUT.F=S4EX4DS3
+$ -- Low  Frequency
+ELECTRIC   X=0.0  MOSCAP  NMOS  V="-5 5 0.2"  LOW  OUT.F=S4EX4DS4
+$ -- Deep depletion 
+ELECTRIC   X=0.0  MOSCAP  NMOS  V="-5 5 0.2"  DEEP 
+
+$ Plot the C-V curve 
+SELECT     TITLE="MOS C-V"
+VIEWPORT   X.MIN=0.5 Y.MIN=0.51
+PLOT.1D    ELECTRIC  COLOR=2  TOP=1E-7  BOT=0  LEFT=-6  RIGHT=6 +
+           X.OFF=1.5 ^CL
+PLOT.1D    IN.FILE=S4EX4DS3  ^CL  ^AX  COLOR=3  LINE=2
+PLOT.1D    IN.FILE=S4EX4DS4  ^CL  ^AX  COLOR=4  LINE=3
+LABEL      LABEL="Low"   X=3  Y=8.3E-8
+LABEL      LABEL="High"  X=3  Y=3.7E-8
+LABEL      LABEL="Deep"  X=3  Y=0.7E-8
+
+$ Part C: Junction Capacitance
+$ Extract the S/D (area) junction capacitance
+ELECTRIC   X=2.0  JCAP  JUNCTION=1  V="0 5 0.5"
+SELECT     TITLE="S/D Junction C"
+VIEWPORT   X.MIN=0.5 Y.MAX=0.49
+PLOT.1D    ELECTRIC  COLOR=2  +
+           TOP=2.5E-8  BOT=0  LEFT=-1  RIGHT=6  X.OFF=1.5 ^CL
+
+savefile out.f=s4ex4d.tif tif
